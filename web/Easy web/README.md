@@ -11,4 +11,4 @@ An easy challenge. Expect to inspect element.
 | subcategory           | Intro                   |
 | flag                  | CTF{Easy_web_challenge} |
 | url                   | challs.example.com:7100 |
-| flag_case_insensitive | True                    |
+| case_insensitive      | True                    |
