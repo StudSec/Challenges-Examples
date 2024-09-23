@@ -1,9 +1,9 @@
-import re
-import os
+# TODO: have hooks that allow the script to work without the libraries installed
+from termcolor import colored
 import subprocess
 import argparse
-from termcolor import colored
-
+import re
+import os
 
 
 def isolate_markdown_category(lines, header):
@@ -138,6 +138,7 @@ def check():
             else:
                 print(colored("Invalid challenge:", "red"), challenge)
 
+    # NOTE: here we assume that the number of files will not exceed POSIX ARG_MAX
     flags = print_flags(output=False)
     args = ['grep', '-r']
     for f in flags:
@@ -146,7 +147,7 @@ def check():
 
     result = subprocess.run(args, capture_output=True, text=True, check=True)
     if "Handout" in result.stdout:
-        print(colored("Warning: flag found in challenge handout", "red"), colored(f, "blue"), result.stdout)
+        print(colored("Warning: flag found in challenge handout", "red"), colored(result.stdout, "blue"))
 
 
 def check_orphan():
