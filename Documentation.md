@@ -23,6 +23,7 @@ The challenge repository contains the following layout
 |   |   \ - README.md
 |   | - Challenge_3/
 | - checker.py
+| - config.toml
 \ - README.md
 ```
 *Note: not all folders are expanded, Challenge_2 and 3 are expected to have the same (base) structure as Challenge_1*
@@ -30,6 +31,11 @@ The challenge repository contains the following layout
 #### checker.py
 Checker.py is the command line utility for a challenge repository, it contains the functionality to check the validity
 of the challenges, list different aspects of all challenges, test challenges and run challenges.
+
+#### config.toml
+This file is optional, and is only required when not running the challenge from an instancer. This file should contain:
+- The base name of the hosting server. This will be passed as the `{{IP}}` parameter in a challenge connection string.
+- A slack-compatible webhook URL, this is optional but errors will be reported to this endpoint.
 
 ## Challenge format
 ```commandline
@@ -207,6 +213,9 @@ Takes an optional argument, if present it attempts to run a challenge by this na
 fails, if the challenge is found and successfully started it returns a connection string to the challenge.
 
 If no arguments are present it attempts to run all challenges. No connection string is given in this case.
+
+When running the challenges the port range `4000-4999` will be used to allocate ports to each challenge. The order
+of port allocation is done sequentially.
 
 #### Test
 Exact same syntax as the `Run` command, however it will run tests on the provided challenge. If this no challenge
