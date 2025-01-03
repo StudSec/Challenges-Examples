@@ -2,7 +2,9 @@
 This file explains the standards used in this repository, as well as further tips and advice.
 
 ## Repository layout
-The challenge repository contains the following layout
+Here is an example challenge repository layout, all folder and filenames in this document are case-insensitive. 
+However, it is recommended to follow the casing outlined here, should two paths be case-identical (eg Test/ and test/)
+then it is not defined which will be chosen.
 ```
 .
 | - Category_1/
@@ -16,12 +18,16 @@ The challenge repository contains the following layout
 |   |   |   |   \ - challenge.c
 |   |   |   | - Tests/
 |   |   |   |   \ main.py
+|   |   |   | - challenge.toml
+|   |   |   | - Description.md
 |   |   |   \ - README.md
 |   |   \ - README.md
 |   | - Subcategory_2/
 |   |   | - Challenge_2/
 |   |   \ - README.md
 |   | - Challenge_3/
+|   | - Banner.png
+|   \ - README.md
 | - checker.py
 | - config.toml
 \ - README.md
@@ -43,6 +49,8 @@ Source/
 Handout/
 Tests/
 README.md
+challenge.toml
+Description.md
 ```
 #### Source
 This directory contains all the deployed source files for the challenge, this is where the Dockerfile and any other
@@ -50,14 +58,16 @@ server hosted code should be. This folder should contain a file `run.sh`, which 
 
 The file `run.sh` will be called as follows:
 ```shell
-run.sh HOSTNAME PORT
+run.sh --hostname HOSTNAME --port PORT --flag FLAG
 ```
 Here the HOSTNAME is the hostname that will be provided to the players, this may be an IP or DNS address. PORT is the
 port where the challenge is to be run, the invoking script bears the responsibility of the port being available. 
-However, `run.sh` is responsible for ensuring the port is accessible on the provided hostname.
+However, `run.sh` is responsible for ensuring the port is accessible on the provided hostname. The FLAG parameter
+is the desired flag (to support dynamic flags), run.sh should output the actual flag the instance is running with on 
+stdout.
 
-The HOSTNAME and PORT arguments may be a comma seperated list, should your challenge require multiple ports. For
-example, the following challenge information table
+The HOSTNAME and PORT arguments may be a comma separated list, should your challenge require multiple ports. For
+example, the following challenge
 ```markdown
 ## Challenge information
 | Difficulty  | Medium                     |
@@ -122,31 +132,32 @@ return {
 
 
 #### README.md
-The challenge README contains all essential information for the challenge, this includes:
-- Name, the first line of the file starting with "## ". This is followed by a high level summary of the challenge
-- Description, the description that will be presented to the CTF players.
-- Challenge information, a markdown table that contains the following information: 
-  - Difficulty (Easy, Medium, Hard)
-  - Point count
-  - Flag
-  - Connection string, supports the following wildcards ({{IP}}, {{PORT}}, {{DNS}})
+The README contains an informal overview of the challenge, including any important deployment information, design notes
+and other considerations. This may contain sensitive information.
+
+#### Description.md
+The Description is the **public** challenge information, it contains a short description of the challenge. It does not
+have to contain any connection information, this is stored in the challenge.toml file. **This file should not contain
+any sensitive information**
+
+### challenge.toml
+This file contains all the challenge metadata, including:
+- UUIDv4
+- Challenge name
+- Difficulty
+- Point count
+- Flag
+- Connection string, supports the following wildcards ({{HOST}}, {{PORT}})
 
 Multiple connection strings are allowed, for more details see [Challenge format](#source)
 
 For example:
-```markdown
-## A medium PWN challenge
-This part contains an unofficial description. Won't be displayed to the end user.
-
-## Description
-A decent pwn challenge. This description will be given to the user
-
-## Challenge information
-| Difficulty  | Medium                    |
-|-------------|---------------------------|
-| points      | 150                       |
-| flag        | CTF{Medium_pwn_challenge} |
-| url         | {{IP}}:{{PORT}}           |
+```toml
+name = "Easy pwn"
+uuid = "621f2fc7-1ab9-4b50-914d-991be464e943"
+difficulty = "easy"
+flag = "CTF{Medium_pwn_challenge}"
+url = ["{{IP}}:{{PORT}}"]
 ```
 
 ## Category format
