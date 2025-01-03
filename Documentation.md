@@ -196,7 +196,6 @@ A nesting level deeper than subcategories is not supported.
 --flags
 --handouts
 --check
---generate
 --run
 --test
 ```
@@ -215,9 +214,6 @@ Lists all handouts for all relevant challenges present in the repository.
 
 #### Check
 Ensures all challenges are properly formatted.
-
-#### Generate
-Generates the root level README.md which contains a link to all challenges grouped by (sub) category.
 
 #### Run
 Takes an optional argument, if present it attempts to run a challenge by this name. If none is found the command
