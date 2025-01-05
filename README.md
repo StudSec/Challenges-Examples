@@ -6,6 +6,6 @@ An example challenges repository for pwncrates
 + [Medium web](./web/Medium%20web/README.md)
 
 #### Pwn
-+ [Easy pwn](./pwn/Easy%20pwn/README.md)
-+ [Medium pwn](./pwn/Medium%20pwn/README.md)
-+ [Hard pwn](./pwn/Hard%20pwn/README.md)
++ [Easy pwn](pwn/buffer_overflow/Easy%20pwn/README.md)
++ [Medium pwn](pwn/buffer_overflow/Medium%20pwn/README.md)
++ [Hard pwn](pwn/buffer_overflow/Hard%20pwn/README.md)

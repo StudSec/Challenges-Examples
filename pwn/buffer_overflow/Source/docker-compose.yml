@@ -1,0 +1,8 @@
+services:
+  buffer_overflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT}:${HOSTNAME}:1337"
+    container_name: buffer_overflow
