@@ -14,6 +14,7 @@ then it is not defined which will be chosen.
 |   |   |   |   \ challenge.c
 |   |   |   | - Source/
 |   |   |   |   | - run.sh
+|   |   |   |   | - destroy.sh
 |   |   |   |   | - Dockerfile
 |   |   |   |   \ - challenge.c
 |   |   |   | - Tests/
@@ -67,7 +68,11 @@ is the desired flag (to support dynamic flags), run.sh should output the actual 
 stdout.
 
 The HOSTNAME and PORT arguments may be a comma separated list, should your challenge require multiple ports. For
-example, the following challenge
+example, the following challenge.
+
+The folder should also contain a file `destroy.sh` that ensures the deployment is destroyed. The script
+should exit silently with code 0 if a deployment is successfully destroyed, and print any
+errors and information otherwise.
 ```markdown
 ## Challenge information
 | Difficulty  | Medium                     |
