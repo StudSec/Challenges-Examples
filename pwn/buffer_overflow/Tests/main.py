@@ -9,6 +9,7 @@ context.log_level = 'error'
 
 def run_test(flag, connection_string=None, handout_path=None, deployment_path=None):
     result = {}
+    connection_string = connection_string[0] # We only have a single connection string
 
     # If the challenge is in good working order (DEPLOYMENT_WORKING)
     p = remote(connection_string.split(":")[0], int(connection_string.split(":")[1]))
@@ -76,7 +77,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run the test with specified arguments.")
 
     parser.add_argument("--flag", type=str, required=True, help="The flag to run the test.")
-    parser.add_argument("--connection-string", type=str, required=True, help="The connection string.")
+    parser.add_argument("--connection-string", type=str, required=True, action='append',
+                        help="The connection string.")
     parser.add_argument("--handout-path", type=str, required=True, help="The handout path.")
     parser.add_argument("--deployment-path", type=str, required=True, help="The deployment path.")
 
