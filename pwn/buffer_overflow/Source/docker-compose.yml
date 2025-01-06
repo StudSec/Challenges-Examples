@@ -4,5 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "${PORT}:${HOSTNAME}:1337"
+      - "${HOSTNAME}:${PORT}:1337"
+    environment:
+      - FLAG=${FLAG}
     container_name: buffer_overflow

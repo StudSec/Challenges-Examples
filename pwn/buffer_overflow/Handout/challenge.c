@@ -4,13 +4,11 @@
 
 void win() {
     char *flag = getenv("FLAG");
-    if (flag) {
-        printf("Congratulations! Here is your flag: %s\n", flag);
-    } else {
-        printf("Flag not found! Ensure the FLAG environment variable is set.\n");
+    while (*flag != 0x00) {
+        putchar(*flag);
+        flag += 1;
     }
-
-    system("/bin/sh");
+    exit(0);
 }
 
 void vuln() {
@@ -21,7 +19,9 @@ void vuln() {
 
 int main() {
     setbuf(stdout, NULL);
-    printf("Welcome to the CTF challenge!\n");
-    vuln();
+    printf("Welcome to the CTF challenge! Win @ %p main @ %p\n", win, main);
+    while (1) {
+        vuln();
+    }
     return 0;
 }
