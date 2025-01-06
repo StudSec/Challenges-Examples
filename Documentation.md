@@ -184,6 +184,7 @@ uuid = "621f2fc7-1ab9-4b50-914d-991be464e943"
 difficulty = "easy"
 flag = "CTF{Medium_pwn_challenge}"
 url = ["{{IP}}:{{PORT}}"]
+points = 50
 ```
 
 ## Category format
