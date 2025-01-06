@@ -104,10 +104,32 @@ https://docs.docker.com/engine/network/
 This is what gets given to the contestants, all files in this folder are zipped and then distributed.
 
 #### Tests
-This folder contains at least one file called `main.py`, which contains the following function
+This folder contains at least one file called `main.py`, which is based on the following template
 ```python
+import argparse
+
 def run_test(flag, connection_string=None, handout_path=None, deployment_path=None):
+    # Implement your test here
     pass
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Run the test with specified arguments.")
+
+    parser.add_argument("--flag", type=str, required=True, help="The flag to run the test.")
+    parser.add_argument("--connection-string", type=str, required=True, help="The connection string.")
+    parser.add_argument("--handout-path", type=str, required=True, help="The handout path.")
+    parser.add_argument("--deployment-path", type=str, required=True, help="The deployment path.")
+
+    args = parser.parse_args()
+
+    print(json.dumps(
+        run_test(
+            flag=args.flag,
+            connection_string=args.connection_string,
+            handout_path=args.handout_path,
+            deployment_path=args.deployment_path,
+        )
+    ))
 ```
 - flag: the flag registered in the system as the 'correct' one
 - connection_string: Connection information for a deployed instance, as specified in the challenge README.md
@@ -134,7 +156,6 @@ return {
     "DUMMY_SECRET": "Admin password in deployment"
 }
 ```
-
 
 #### README.md
 The README contains an informal overview of the challenge, including any important deployment information, design notes
