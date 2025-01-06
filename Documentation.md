@@ -215,11 +215,13 @@ The public description of the category, this is what players will see.
 
 #### category.toml
 Contains the following information:
+- name
 - uuid
 - Path to banner image (optional)
 
 An example toml file would be
 ```toml
+name = "example category"
 banner = "Banner.png"
 uuid = "84c988fa-9f42-42c7-b28a-8202b0962798"
 ```
