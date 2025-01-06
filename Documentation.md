@@ -22,6 +22,8 @@ then it is not defined which will be chosen.
 |   |   |   | - challenge.toml
 |   |   |   | - Description.md
 |   |   |   \ - README.md
+|   |   | - Description.md  
+|   |   | - category.toml
 |   |   \ - README.md
 |   | - Subcategory_2/
 |   |   | - Challenge_2/
@@ -193,33 +195,31 @@ dynamic_flags = true
 ```
 
 ## Category format
-#### Main category
-A main category contains the following files, in addition to challenges and subcategories.
+A category contains at least the following files.
 ```commandline
-Banner.png
 README.md
+Description.md
+category.toml
+Banner.png
 ```
 
-**README.md**
-
-The README contains the category name on the first line starting with "## " and a mandatory description. For example:
+#### README.md
+The README contains an informal description of the (sub) category. For example:
 ```markdown
 ## PWN
 The world of low level exploitation!
 ```
 
-**Banner.png**
+#### Description.md
+The public description of the category, this is what players will see.
 
-A 1024x1024 png image, used as the banner for the category.
+#### category.toml
+The category.toml is used to point to the banner image, it may be empty in the case that no banner is present. However,
+it must always at least exist, as it is used to mark the folder as a category.
 
-#### Subcategory
-A subcategory does not contain a `Banner.png`, but does contain a `README.md` in a simular format. For example:
-```markdown
-## Buffer overflows
-<optional description>
-```
-
-A nesting level deeper than subcategories is not supported.
+#### Banner.png
+This is the banner image for the category, a 1024x1024 PNG image is recommended. The file name is not fixed, but
+instead has to be pointed to by `category.toml`
 
 ## Checker.py
 ```txt
