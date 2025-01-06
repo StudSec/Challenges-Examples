@@ -214,12 +214,14 @@ The world of low level exploitation!
 The public description of the category, this is what players will see.
 
 #### category.toml
-The category.toml is used to point to the banner image, it may be empty in the case that no banner is present. However,
-it must always at least exist, as it is used to mark the folder as a category.
+Contains the following information:
+- uuid
+- Path to banner image (optional)
 
 An example toml file would be
 ```toml
 banner = "Banner.png"
+uuid = "84c988fa-9f42-42c7-b28a-8202b0962798"
 ```
 
 #### Banner.png
