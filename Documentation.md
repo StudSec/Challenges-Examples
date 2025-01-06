@@ -217,6 +217,11 @@ The public description of the category, this is what players will see.
 The category.toml is used to point to the banner image, it may be empty in the case that no banner is present. However,
 it must always at least exist, as it is used to mark the folder as a category.
 
+An example toml file would be
+```toml
+banner = "Banner.png"
+```
+
 #### Banner.png
 This is the banner image for the category, a 1024x1024 PNG image is recommended. The file name is not fixed, but
 instead has to be pointed to by `category.toml`
