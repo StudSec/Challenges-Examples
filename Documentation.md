@@ -174,6 +174,7 @@ This file contains all the challenge metadata, including:
 - Point count
 - Flag
 - Connection string, supports the following wildcards ({{HOST}}, {{PORT}})
+- if dynamic flags are supported (this is an optional field, the absence will be considered as "False")
 
 Multiple connection strings are allowed, for more details see [Challenge format](#source)
 
@@ -185,6 +186,7 @@ difficulty = "easy"
 flag = "CTF{Medium_pwn_challenge}"
 url = ["{{IP}}:{{PORT}}"]
 points = 50
+dynamic_flags = true
 ```
 
 ## Category format

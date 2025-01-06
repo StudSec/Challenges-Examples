@@ -4,3 +4,4 @@ difficulty = "easy"
 flag = "CTF{FLAG}"
 url = ["nc {{IP}} {{PORT}}"]
 points = 50
+dynamic_flags = true
