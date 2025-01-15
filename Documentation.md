@@ -19,6 +19,8 @@ then it is not defined which will be chosen.
 |   |   |   |   \ - challenge.c
 |   |   |   | - Tests/
 |   |   |   |   \ main.py
+|   |   |   | - Build/
+|   |   |   |   \ build.sh
 |   |   |   | - challenge.toml
 |   |   |   | - Description.md
 |   |   |   \ - README.md
@@ -51,6 +53,7 @@ This file is optional, and is only required when not running the challenge from 
 Source/
 Handout/
 Tests/
+Build/
 README.md
 challenge.toml
 Description.md
@@ -104,6 +107,12 @@ https://docs.docker.com/engine/network/
 
 #### Handout
 This is what gets given to the contestants, all files in this folder are zipped and then distributed.
+
+#### Build
+This folder contains all files needed to build the challenge. The folder should contain at least a `build.sh` file
+which takes two arguments `--source-path`, `--handout-path` and `--flag`. The script should build the challenge (eg, 
+compile a binary) and place these at the `--source-path` and `--handout-path` location. Should this not be required
+the script should just exit with status code `0`.
 
 #### Tests
 This folder contains at least one file called `main.py`, which is based on the following template
