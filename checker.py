@@ -19,15 +19,14 @@ allocate_port = allocate_port_generator()
 
 
 class Challenge:
-    def __init__(self, path):
+    def __init__(self, path, uuid):
         self.path = path
         config = toml.load(path + "/challenge.toml")
-        self.name = config["name"]
-        self.uuid = config["uuid"]
-        self.difficulty = config["difficulty"]
-        self.flag = config["flag"]
-        self.url = config["url"]
-        self.points = config["points"]
+        self.name = config[uuid]["name"]
+        self.uuid = uuid
+        self.difficulty = config[uuid]["difficulty"]
+        self.flag = config[uuid]["flag"]
+        self.url = config[uuid]["url"]
         self.dynamic_flags = config.get("dynamic_flags", False)
         self.handouts = []
 
@@ -147,21 +146,20 @@ if __name__ == "__main__":
             continue
         try:
             if "challenge.toml" in filenames:
-                uuid = toml.load(dirpath + "/challenge.toml")["uuid"]
+                uuids = toml.load(dirpath + "/challenge.toml").keys()
+                for uuid in uuids:
+                    if uuid in challenges.keys() or uuid in categories.keys():
+                        if args.check:
+                            print(colored(f"Duplicate uuid found: {uuid}", "red"))
+                        continue
 
-                if uuid in challenges.keys() or uuid in categories.keys():
-                    if args.check:
-                        print(colored(f"Duplicate uuid found: {uuid}", "red"))
-                    continue
+                    challenges[uuid] = Challenge(dirpath, uuid)
 
-                challenges[uuid] = Challenge(dirpath)
-
-                # Link to category
-                category_uuid = toml.load(dirpath + "/../category.toml")["uuid"]
-                categories[category_uuid].challenges.append(challenges[uuid])
+                    # Link to category
+                    category_uuid = toml.load(dirpath + "/../category.toml")["uuid"]
+                    categories[category_uuid].challenges.append(challenges[uuid])
             if "category.toml" in filenames:
                 uuid = toml.load(dirpath + "/category.toml")["uuid"]
-
                 if uuid in list(challenges.keys()) or uuid in list(categories.keys()):
                     if args.check:
                         print(colored(f"Duplicate uuid found: {uuid}", "red"))
