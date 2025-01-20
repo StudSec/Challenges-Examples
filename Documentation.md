@@ -78,14 +78,12 @@ example, the following challenge.
 The folder should also contain a file `destroy.sh` that ensures the deployment is destroyed. The script
 should exit silently with code 0 if a deployment is successfully destroyed, and print any
 errors and information otherwise.
-```markdown
-## Challenge information
-| Difficulty  | Medium                     |
-|-------------|----------------------------|
-| points      | 150                        |
-| flag        | CTF{test_flag}             |
-| url         | http://{{IP}}:{{PORT}}/    |
-| url         | ssh root@{{IP}} -p {{PORT}}|
+```toml
+[621f2fc7-1ab9-4b50-914d-991be464e943]
+name = "Easy pwn"
+difficulty = "easy"
+flag = {"CTF{Easy_pwn_challenge}" = 50}
+url = ["{{IP}}:{{PORT}}"]
 ```
 Will result in `run.sh` being invoked with the following arguments. After which an HTTP service is expected to run on
 `http://IP1:PORT1/` and an SSH service on `ssh root@IP2 -p PORT2`.
@@ -182,25 +180,33 @@ any sensitive information**
 
 ### challenge.toml
 This file contains all the challenge metadata, including:
-- UUIDv4
+- UUIDv4 -> This is the header
 - Challenge name
 - Difficulty
-- Point count
-- Flag
+- Flag -> This is a dictionary that includes the amount of points for that flag
 - Connection string, supports the following wildcards ({{HOST}}, {{PORT}})
 - if dynamic flags are supported (this is an optional field, the absence will be considered as "False")
 
 Multiple connection strings are allowed, for more details see [Challenge format](#source)
 
+Multiple challenges are allowed in the same challenge.toml file, in this case the challenges are seen as multiple
+subchallenges (eg, first getting code execution and the getting root), here the order that the challenges are declared
+is respected.
+
 For example:
 ```toml
+[621f2fc7-1ab9-4b50-914d-991be464e943]
 name = "Easy pwn"
-uuid = "621f2fc7-1ab9-4b50-914d-991be464e943"
 difficulty = "easy"
-flag = "CTF{Medium_pwn_challenge}"
+flag = {"CTF{Easy_pwn_challenge}" = 50}
 url = ["{{IP}}:{{PORT}}"]
-points = 50
 dynamic_flags = true
+
+[e743afe9-44a7-482f-998d-0f4151acad64]
+name = "Easy pwn revenge"
+difficulty = "easy"
+flag = {"CTF{Easy_easy_pwn_challenge}" = 50, "CTF{Revenge_pwn_challenge}" = 100}
+url = ["{{IP}}:{{PORT}}"]
 ```
 
 ## Category format
