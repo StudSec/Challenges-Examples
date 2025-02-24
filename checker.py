@@ -2,9 +2,11 @@ from termcolor import colored
 import subprocess
 import traceback
 import argparse
+import requests
 import pathlib
 import json
 import toml
+import sys
 import os
 
 HOSTNAME = "127.0.0.1"
@@ -30,7 +32,7 @@ class Challenge:
         self.dynamic_flags = config.get("dynamic_flags", False)
         self.handouts = []
 
-        self.port = 0
+        self.port = None
         if os.path.exists(self.path + "/Source/run.sh") or os.path.exists(self.path + "/Source/destroy.sh"):
             self.hosted = True
         else:
@@ -58,12 +60,13 @@ class Challenge:
 
         if self.port == 0:
             self.port = str(next(allocate_port))
-        subprocess.run(['/bin/sh', self.path + "/Source/run.sh",
+        subprocess.run(['/bin/bash', self.path + "/Source/run.sh",
                         "--hostname", HOSTNAME,
-                        "--port", self.port,
-                        "--flag", self.flag],
+                        "--port", self.port] +
+                        sum([['--flag', z] for z in self.flag.keys()], []),
                        cwd=self.path + "/Source/",
-                       capture_output=True)
+                       stdout=sys.stdout,
+                       stderr=sys.stderr)
 
     def test(self):
         if HOSTNAME == "0.0.0.0":
@@ -71,15 +74,12 @@ class Challenge:
         else:
             host = HOSTNAME
 
-        result = subprocess.run(["python3", self.path + "/Tests/main.py",
-                        "--flag", self.flag,
-                        "--handout-path", self.path + "/Handout",
+        result = subprocess.run(["python3", self.path + "/Tests/main.py"] + sum([['--flag', z] for z in self.flag.keys()], []) + ["--handout-path", self.path + "/Handout",
                         "--deployment-path", self.path + "/Source"
                         ] + [
             elem for item in self.url for elem in
             ("--connection-string", item.replace('{{PORT}}', self.port).replace('{{IP}}', host))
-        ],
-                       capture_output=True, text=True, cwd=self.path + "/Tests")
+        ], capture_output=True, text=True, cwd=self.path + "/Tests")
         if result.stderr:
             print(colored(f"Error while running tests for {self.name}", "red"))
             print(result.stderr)
@@ -88,6 +88,9 @@ class Challenge:
 
         output = ""
         all_ok = True
+        if not result:
+            print(colored("MISSING", "red"), "missing tests")
+            return
         for test in result:
             if not result[test] and not args.silent:
                 output += test + " " + colored("OK", "green") + "\n"
@@ -106,7 +109,7 @@ class Challenge:
         if not self.hosted:
             return
 
-        subprocess.run(['/bin/sh', self.path + "/Source/destroy.sh"], cwd=self.path + "/Source/",
+        subprocess.run(['/bin/bash', self.path + "/Source/destroy.sh"], cwd=self.path + "/Source/",
                        capture_output=True)
 
 
@@ -119,6 +122,77 @@ class Category:
         self.uuid = config["uuid"]
         self.banner = config.get("banner", "")
         self.name = config["name"]
+
+
+def CTFD_upload_challenge(challenge, URL, session, category_name=None):
+    headers = {"Authorization": f"Token {session}"}
+
+    if len(challenge.flag.keys()) > 1:
+        part = 0
+    else:
+        part = None
+
+    for flag in challenge.flag:
+        if part is not None:
+            part += 1
+        with open(challenge.path + "/Description.md", "r") as f:
+            description = f.read()
+        if challenge.hosted:
+            description += "\n\n "
+            description += ''.join([
+                elem for item in challenge.url for elem in
+                ("\n\n", item.replace('{{PORT}}', challenge.port).replace('{{IP}}', HOSTNAME).replace('{{HOST}}', HOSTNAME))
+            ])
+
+        challenge_data = {
+            "name": challenge.name + f" p{str(part)}" if part else challenge.name,
+            "category": category_name if category_name else "",
+            "description": description,
+            "value": challenge.flag[flag],
+            "type": "standard",
+            "state": "hidden"
+        }
+
+        response = requests.post(f"{URL}/api/v1/challenges", json=challenge_data, headers=headers)
+        if response.status_code == 200:
+            print(colored(f"Uploaded challenge {challenge.name}", "green"))
+        else:
+            print(response.text)
+            print(colored(f"Failed to upload challenge {challenge.name}", "red"))
+            continue
+
+
+        challenge_id = response.json()["data"]["id"]
+
+        flag_data = {
+            "challenge_id": challenge_id,
+            "content": flag,
+            "type": "static",
+            "data": "",
+        }
+        flag_response = requests.post(f"{URL}/api/v1/flags", json=flag_data, headers=headers)
+        if flag_response.status_code == 200:
+            print(colored(f"    - Uploaded flag for {challenge.name}", "green"))
+        else:
+            print(flag_response.text)
+            print(colored(f"    - Failed to upload flag for {challenge.name}", "red"))
+            continue
+
+        if not os.path.exists(challenge.path + "/Handout"):
+            continue
+        for filename in os.listdir(challenge.path + "/Handout"):
+            file_path = os.path.join(challenge.path + "/Handout", filename)
+            if os.path.isfile(file_path):
+                with open(file_path, "rb") as file:
+                    files = {
+                        'file': (filename, file)
+                    }
+                    file_response = requests.post(f"{URL}/api/v1/files", headers=headers, files=files,
+                                                  data={"challenge_id": challenge_id, "type": "challenge"})
+                    if file_response.status_code != 200:
+                        print(f"     - Error uploading {filename}:", file_response.json())
+                    else:
+                        print(f"     - Uploaded {filename} successfully.")
 
 
 if __name__ == "__main__":
@@ -134,6 +208,7 @@ if __name__ == "__main__":
     parser.add_argument("--run", type=str, const="*", nargs='?', help="run challenge(s)")
     parser.add_argument("--stop", type=str, const="*", nargs='?', help="stop challenge(s)")
     parser.add_argument("--test", type=str, const="*", nargs='?', help="test challenge(s)")
+    parser.add_argument("--CTFd", type=str, const="*", nargs='?', help="Upload challenges to a specified CTFd instance. Provide the URL and API key as arguments (e.g., --CTFd <url> <key>).")
 
     args = parser.parse_args()
     HOSTNAME = args.host
@@ -177,8 +252,14 @@ if __name__ == "__main__":
                 print(traceback.format_exc())
 
     # Allocate port in order of uuid
+    allocated_ports = {}
     for uuid in sorted(challenges.keys()):
-        challenges[uuid].allocate_port()
+        if challenges[uuid].path in allocated_ports.keys():
+            challenges[uuid].port = allocated_ports[challenges[uuid].path]
+        else:
+            challenges[uuid].allocate_port()
+            if challenges[uuid].port:
+                allocated_ports[challenges[uuid].path] = challenges[uuid].port
 
     if args.challenges:
         for uuid in challenges:
@@ -190,7 +271,6 @@ if __name__ == "__main__":
         for uuid in challenges:
             if not (any(item in challenges[uuid].name for item in args.flags.split(",")) or args.flags == "*"):
                 continue
-
             print(f"- {colored(challenges[uuid].name, 'blue')} {colored(challenges[uuid].flag, 'white')}")
     if args.handouts:
         for uuid in challenges:
@@ -202,20 +282,30 @@ if __name__ == "__main__":
                 print(colored(challenge.name, "blue"))
                 for file in challenge.handouts:
                     print(f"- {colored(file, 'white')}")
-    if args.test:   # Add filter
+    if args.test:
         for uuid in challenges:
             if not (any(item in challenges[uuid].name for item in args.test.split(",")) or args.test == "*"):
                 continue
+            print(challenges[uuid].name)
             challenges[uuid].run()
             challenges[uuid].test()
             challenges[uuid].stop()
-    if args.run:    # Add filter
+    if args.run:
+        deployed = []
         for uuid in challenges:
             if not (any(item in challenges[uuid].name for item in args.run.split(",")) or args.run == "*"):
                 continue
-            challenges[uuid].run()
-    if args.stop:   # Add filter
+            if challenges[uuid].path not in deployed:
+                challenges[uuid].run()
+                deployed.append(challenges[uuid].path)
+    if args.stop:
         for uuid in challenges:
             if not (any(item in challenges[uuid].name for item in args.stop.split(",")) or args.stop == "*"):
                 continue
             challenges[uuid].stop()
+    if args.CTFd:
+        ctfd_url, ctfd_token = args.CTFd.split()
+
+        for uuid, category in categories.items():
+            for challenge in category.challenges:
+                CTFD_upload_challenge(challenge, ctfd_url, ctfd_token, category_name=category.name)
