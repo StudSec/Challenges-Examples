@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from termcolor import colored
 import subprocess
 import traceback
@@ -38,11 +39,10 @@ class Challenge:
         else:
             self.hosted = False
 
-        if self.hosted and args.check:
-            if not os.path.exists(path + "/Source/destroy.sh"):
-                print(self.name, colored("destroy.sh not found", "red"))
-            if not os.path.exists(path + "/Source/run.sh"):
-                print(self.name, colored("run.sh not found", "red"))
+        if not os.path.exists(path + "/Source/destroy.sh"):
+            print(self.name, colored("destroy.sh not found", "red"))
+        if not os.path.exists(path + "/Source/run.sh"):
+            print(self.name, colored("run.sh not found", "red"))
 
         for dirpath, dirnames, filenames in os.walk(path + "/Handout"):
             for filename in filenames:
@@ -195,6 +195,64 @@ def CTFD_upload_challenge(challenge, URL, session, category_name=None):
                         print(f"     - Uploaded {filename} successfully.")
 
 
+# This class represens and (is responsible for building) the total set of challenges
+# from the repo. This means that it parses everything and provides ways to
+# access challenge data.
+class ChallengeSet:
+    def allocate_ports(self):
+        # Allocate port in order of uuid
+        self.allocated_ports = {}
+        for uuid in sorted(self.challenges.keys()):
+            if self.challenges[uuid].path in self.allocated_ports.keys():
+                self.challenges[uuid].port = self.allocated_ports[self.challenges[uuid].path]
+            else:
+                self.challenges[uuid].allocate_port()
+                if self.challenges[uuid].port:
+                    self.allocated_ports[self.challenges[uuid].path] = self.challenges[uuid].port
+
+
+    def __init__(self, path: str):
+        self.challenges = {}
+        self.categories = {}
+
+        for dirpath, dirnames, filenames in os.walk(path):
+            
+            # We don't want to try to parse challenge source, though this might be a bit overly aggressive
+            if any(folder in dirpath for folder in ["/Source/", "/Handout/", "/Tests/"]):
+                continue
+            try:
+                if "challenge.toml" in filenames:
+                    uuids = toml.load(dirpath + "/challenge.toml").keys()
+                    for uuid in uuids:
+                        if uuid in self.challenges.keys() or uuid in self.categories.keys():
+                            print(colored(f"Duplicate uuid found: {uuid}", "red"))
+                            continue
+
+                        self.challenges[uuid] = Challenge(dirpath, uuid)
+
+                        # Link to category
+                        category_uuid = toml.load(dirpath + "/../category.toml")["uuid"]
+                        self.categories[category_uuid].challenges.append(self.challenges[uuid])
+                if "category.toml" in filenames:
+                    uuid = toml.load(dirpath + "/category.toml")["uuid"]
+                    if uuid in list(self.challenges.keys()) or uuid in list(self.categories.keys()):
+                        print(colored(f"Warning: Duplicate uuid found: {uuid}", "red"))
+
+                    self.categories[uuid] = Category(dirpath)
+
+                    # Link to upper category, if exists
+                    if os.path.isfile(dirpath + "/../category.toml"):
+                        category_uuid = toml.load(dirpath + "/../category.toml")["uuid"]
+                        self.categories[category_uuid].challenges.append(self.categories[uuid])
+            
+            except Exception as e:
+                print(colored(f"Error with {dirpath}", "red"))
+                print(traceback.format_exc())
+                raise Exception("challenge parse error!")
+
+        self.allocate_ports()
+        pass
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Challenge sanity checker")
 
@@ -213,68 +271,25 @@ if __name__ == "__main__":
     args = parser.parse_args()
     HOSTNAME = args.host
 
-    challenges = {}
-    categories = {}
-    for dirpath, dirnames, filenames in os.walk(pathlib.Path(__file__).parent.resolve()):
-        # We don't want to try to parse challenge source, though this might be a bit overly aggressive
-        if any(folder in dirpath for folder in ["/Source/", "/Handout/", "/Tests/"]):
-            continue
-        try:
-            if "challenge.toml" in filenames:
-                uuids = toml.load(dirpath + "/challenge.toml").keys()
-                for uuid in uuids:
-                    if uuid in challenges.keys() or uuid in categories.keys():
-                        if args.check:
-                            print(colored(f"Duplicate uuid found: {uuid}", "red"))
-                        continue
-
-                    challenges[uuid] = Challenge(dirpath, uuid)
-
-                    # Link to category
-                    category_uuid = toml.load(dirpath + "/../category.toml")["uuid"]
-                    categories[category_uuid].challenges.append(challenges[uuid])
-            if "category.toml" in filenames:
-                uuid = toml.load(dirpath + "/category.toml")["uuid"]
-                if uuid in list(challenges.keys()) or uuid in list(categories.keys()):
-                    if args.check:
-                        print(colored(f"Duplicate uuid found: {uuid}", "red"))
-                    continue
-
-                categories[uuid] = Category(dirpath)
-
-                # Link to upper category, if exists
-                if os.path.isfile(dirpath + "/../category.toml"):
-                    category_uuid = toml.load(dirpath + "/../category.toml")["uuid"]
-                    categories[category_uuid].challenges.append(categories[uuid])
-        except Exception as e:
-            if args.check:
-                print(colored(f"Error with {dirpath}", "red"))
-                print(traceback.format_exc())
-
-    # Allocate port in order of uuid
-    allocated_ports = {}
-    for uuid in sorted(challenges.keys()):
-        if challenges[uuid].path in allocated_ports.keys():
-            challenges[uuid].port = allocated_ports[challenges[uuid].path]
-        else:
-            challenges[uuid].allocate_port()
-            if challenges[uuid].port:
-                allocated_ports[challenges[uuid].path] = challenges[uuid].port
+    challenge_set = ChallengeSet(pathlib.Path(__file__).parent.resolve())
 
     if args.challenges:
-        for uuid in challenges:
-            print(f"- {colored(uuid, 'blue')} {colored(challenges[uuid].name, 'white')}")
+        for uuid in challenge_set.challenges:
+            print(f"- {colored(uuid, 'blue')} {colored(challenge_set.challenges[uuid].name, 'white')}")
+
     if args.categories:
-        for uuid in categories:
-            print(f"- {colored(uuid, 'blue')} {colored(categories[uuid].name, 'white')}")
+        for uuid in challenge_set.categories:
+            print(f"- {colored(uuid, 'blue')} {colored(challenge_set.categories[uuid].name, 'white')}")
+
     if args.flags:
-        for uuid in challenges:
-            if not (any(item in challenges[uuid].name for item in args.flags.split(",")) or args.flags == "*"):
+        for uuid in challenge_set.challenges:
+            if not (any(item in challenge_set.challenges[uuid].name for item in args.flags.split(",")) or args.flags == "*"):
                 continue
-            print(f"- {colored(challenges[uuid].name, 'blue')} {colored(challenges[uuid].flag, 'white')}")
+            print(f"- {colored(challenge_set.challenges[uuid].name, 'blue')} {colored(challenge_set.challenges[uuid].flag, 'white')}")
+
     if args.handouts:
-        for uuid in challenges:
-            challenge = challenges[uuid]
+        for uuid in challenge_set.challenges:
+            challenge = challenge_set.challenges[uuid]
             if not (any(item in challenge.name for item in args.handouts.split(",")) or args.handouts == "*"):
                 continue
 
@@ -282,30 +297,34 @@ if __name__ == "__main__":
                 print(colored(challenge.name, "blue"))
                 for file in challenge.handouts:
                     print(f"- {colored(file, 'white')}")
+
     if args.test:
-        for uuid in challenges:
-            if not (any(item in challenges[uuid].name for item in args.test.split(",")) or args.test == "*"):
+        for uuid in challenge_set.challenges:
+            if not (any(item in challenge_set.challenges[uuid].name for item in args.test.split(",")) or args.test == "*"):
                 continue
-            print(challenges[uuid].name)
-            challenges[uuid].run()
-            challenges[uuid].test()
-            challenges[uuid].stop()
+            print(challenge_set.challenges[uuid].name)
+            challenge_set.challenges[uuid].run()
+            challenge_set.challenges[uuid].test()
+            challenge_set.challenges[uuid].stop()
+
     if args.run:
         deployed = []
-        for uuid in challenges:
-            if not (any(item in challenges[uuid].name for item in args.run.split(",")) or args.run == "*"):
+        for uuid in challenge_set.challenges:
+            if not (any(item in challenge_set.challenges[uuid].name for item in args.run.split(",")) or args.run == "*"):
                 continue
-            if challenges[uuid].path not in deployed:
-                challenges[uuid].run()
-                deployed.append(challenges[uuid].path)
+            if challenge_set.challenges[uuid].path not in deployed:
+                challenge_set.challenges[uuid].run()
+                deployed.append(challenge_set.challenges[uuid].path)
+
     if args.stop:
-        for uuid in challenges:
-            if not (any(item in challenges[uuid].name for item in args.stop.split(",")) or args.stop == "*"):
+        for uuid in challenge_set.challenges:
+            if not (any(item in challenge_set.challenges[uuid].name for item in args.stop.split(",")) or args.stop == "*"):
                 continue
-            challenges[uuid].stop()
+            challenge_set.challenges[uuid].stop()
+
     if args.CTFd:
         ctfd_url, ctfd_token = args.CTFd.split()
 
-        for uuid, category in categories.items():
+        for uuid, category in challenge_set.categories.items():
             for challenge in category.challenges:
                 CTFD_upload_challenge(challenge, ctfd_url, ctfd_token, category_name=category.name)
