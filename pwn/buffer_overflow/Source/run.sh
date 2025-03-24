@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Default values for optional parameters
-HOSTNAME="localhost"
+HOSTNAME="127.0.0.1"
 PORT=1337
 FLAG=""
 
@@ -38,5 +38,5 @@ fi
 export HOSTNAME=$HOSTNAME
 export PORT=$PORT
 export FLAG=$FLAG
-docker-compose up --build -d
+docker compose up --build -d
 echo "Challenge running on $HOSTNAME:$PORT with $FLAG"
