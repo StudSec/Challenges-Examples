@@ -38,5 +38,5 @@ fi
 export HOSTNAME=$HOSTNAME
 export PORT=$PORT
 export FLAG=$FLAG
-docker compose up --build -d
+docker compose -p buffer_overflow$PORT up --build -d --force-recreate
 echo "Challenge running on $HOSTNAME:$PORT with $FLAG"

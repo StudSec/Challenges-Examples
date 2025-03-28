@@ -26,5 +26,6 @@ export PORT=$PORT
 export FLAG=$FLAG
 
 docker kill buffer_overflow$PORT
+docker remove buffer_overflow$PORT
 # Exit with the status code of the previous command
 exit $?

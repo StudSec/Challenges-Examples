@@ -4,6 +4,7 @@ import filecmp
 import json
 import re
 import os
+import socket
 
 context.log_level = 'error'
 
@@ -14,12 +15,19 @@ def run_test(flag, connection_string=None, handout_path=None, deployment_path=No
     port = connection_string.split(" ")[1]
 
     # If the challenge is in good working order (DEPLOYMENT_WORKING)
-    p = remote(host, int(port))
-    if "Welcome to the CTF challenge!" in p.recvline().decode('ascii'):
-        result["DEPLOYMENT_WORKING"] = ""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    res = sock.connect_ex((host, int(port)))
+    
+    if (res == 0):
+        sock.close()
+        p = remote(host, int(port))
+        if "Welcome to the CTF challenge!" in p.recvline().decode('ascii'):
+            result["DEPLOYMENT_WORKING"] = ""
+        else:
+            result["DEPLOYMENT_WORKING"] = "Challenge banner missing"
+        p.close()    
     else:
-        result["DEPLOYMENT_WORKING"] = "Challenge banner missing"
-    p.close()
+        result["DEPLOYMENT_WORKING"] = "Connection failed"
 
     # If the deployed flag and the stored flag (pass as function parameter) match (FLAG_CORRECT)
     if result["DEPLOYMENT_WORKING"]:
