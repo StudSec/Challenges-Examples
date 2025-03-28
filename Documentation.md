@@ -115,22 +115,23 @@ the script should just exit with status code `0`.
 #### Tests
 This folder contains at least one file called `main.py`, which is based on the following template
 ```python
-import argparse
-import json
-
-def run_test(flag, connection_string=None, handout_path=None, deployment_path=None):
-    # Implement your test here
-    pass
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run the test with specified arguments.")
 
     parser.add_argument("--flag", type=str, required=True, help="The flag to run the test.")
-    parser.add_argument("--connection-string", type=str, required=True, action='append', 
-                        help="The connection string.")
-    parser.add_argument("--handout-path", type=str, required=True, help="The handout path.")
-    parser.add_argument("--deployment-path", type=str, required=True, help="The deployment path.")
+    parser.add_argument("--connection-string", type=str, required=True, action='append',
+                        help="The connection string in the form: \"<ip/hostname> <port>\"" +
+                        "an example includes: --connection-string \"localhost 1337\" or" +
+                        "--connection-string \"172.18.0.1 6564\"")
+    parser.add_argument("--handout-path", type=str, required=True, help="The path" +
+    " the /Handout dir of the challenge.")
+    parser.add_argument("--deployment-path", type=str, required=True, help="The " +
+    "path to the /Source directory of this challenge.")
 
+    parser.add_argument("--force-reusability", type=str, required=False, help="This " +
+    "flag is used when testing the challenge before it is given to the player."
+    "After test is run with this flag, no artifacts should be left around"
+    "that can affect the players experience")
     args = parser.parse_args()
 
     print(json.dumps(
@@ -147,6 +148,7 @@ if __name__ == '__main__':
 - connection_string: Connection information for a deployed instance, as specified in the challenge README.md
 - handout_path: path to a folder containing the handout
 - deployment_path: path to a folder/mount containing the files deployed
+- force-reusability: a flag that can be set
 
 This function should then check
 1) If the challenge is in good working order (DEPLOYMENT_WORKING)
