@@ -195,20 +195,20 @@ def CTFD_upload_challenge(challenge, URL, session, category_name=None):
                         print(f"     - Uploaded {filename} successfully.")
 
 
-# This class represens and (is responsible for building) the total set of challenges
+# This class represents and (is responsible for building) the total set of challenges
 # from the repo. This means that it parses everything and provides ways to
 # access challenge data.
 class ChallengeSet:
     def allocate_ports(self):
         # Allocate port in order of uuid
-        self.allocated_ports = {}
+        allocated_ports = {}
         for uuid in sorted(self.challenges.keys()):
-            if self.challenges[uuid].path in self.allocated_ports.keys():
-                self.challenges[uuid].port = self.allocated_ports[self.challenges[uuid].path]
+            if self.challenges[uuid].path in allocated_ports.keys():
+                self.challenges[uuid].port = allocated_ports[self.challenges[uuid].path]
             else:
                 self.challenges[uuid].allocate_port()
                 if self.challenges[uuid].port:
-                    self.allocated_ports[self.challenges[uuid].path] = self.challenges[uuid].port
+                    allocated_ports[self.challenges[uuid].path] = self.challenges[uuid].port
 
 
     def __init__(self, path: str):
@@ -271,7 +271,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     HOSTNAME = args.host
 
-    challenge_set = ChallengeSet(pathlib.Path(__file__).parent.resolve())
+    challenge_set = ChallengeSet(str(pathlib.Path(__file__).parent.resolve()))
 
     if args.challenges:
         for uuid in challenge_set.challenges:
