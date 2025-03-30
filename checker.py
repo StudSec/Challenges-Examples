@@ -39,10 +39,12 @@ class Challenge:
         else:
             self.hosted = False
 
-        if not os.path.exists(path + "/Source/destroy.sh"):
-            print(self.name, colored("destroy.sh not found", "red"))
-        if not os.path.exists(path + "/Source/run.sh"):
-            print(self.name, colored("run.sh not found", "red"))
+        # This check is here to make sure any challenge that can start can also be stopped
+        if self.hosted and args.check:
+            if not os.path.exists(path + "/Source/destroy.sh"):
+                print(self.name, colored("destroy.sh not found", "red"))
+            if not os.path.exists(path + "/Source/run.sh"):
+                print(self.name, colored("run.sh not found", "red"))
 
         for dirpath, dirnames, filenames in os.walk(path + "/Handout"):
             for filename in filenames:
