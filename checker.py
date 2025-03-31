@@ -197,6 +197,7 @@ def CTFD_upload_challenge(challenge, URL, session, category_name=None):
                         print(f"     - Uploaded {filename} successfully.")
 
 
+
 # This class represents and (is responsible for building) the total set of challenges
 # from the repo. This means that it parses everything and provides ways to
 # access challenge data.

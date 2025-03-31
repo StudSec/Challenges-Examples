@@ -64,32 +64,34 @@ server hosted code should be. This folder should contain a file `run.sh`, which 
 
 The file `run.sh` will be called as follows:
 ```shell
-run.sh --hostname HOSTNAME --port PORT --flag FLAG
+run.sh --hostname HOSTNAME --port PORT --flag FLAG --team TEAM_UUID
 ```
 Here the HOSTNAME is the hostname that will be provided to the players, this may be an IP or DNS address. PORT is the
 port where the challenge is to be run, the invoking script bears the responsibility of the port being available. 
 However, `run.sh` is responsible for ensuring the port is accessible on the provided hostname. The FLAG parameter
 is the desired flag (to support dynamic flags), run.sh should output the actual flag the instance is running with on 
-stdout.
+stdout. The team parameter is optional, but may be used to deploy multiple instances of the same challenge.
 
 The HOSTNAME and PORT arguments may be a comma separated list, should your challenge require multiple ports. For
 example, the following challenge.
 
-The folder should also contain a file `destroy.sh` that ensures the deployment is destroyed. The script
-should exit silently with code 0 if a deployment is successfully destroyed, and print any
-errors and information otherwise.
 ```toml
 [621f2fc7-1ab9-4b50-914d-991be464e943]
-name = "Easy pwn"
-difficulty = "easy"
-flag = {"CTF{Easy_pwn_challenge}" = 50}
-url = ["{{IP}}:{{PORT}}"]
+name = "Hard challenge"
+difficulty = "hard"
+flag = {"CTF{A_Very_Hard_Challenge}" = 500}
+url = ["http://{{IP}}:{{PORT}}/", "ssh root@{{IP}} -p {{PORT}}"]
 ```
 Will result in `run.sh` being invoked with the following arguments. After which an HTTP service is expected to run on
 `http://IP1:PORT1/` and an SSH service on `ssh root@IP2 -p PORT2`.
 ```shell
 run.sh IP1,IP2 PORT1,PORT2
 ```
+
+The folder should also contain a file `destroy.sh` that ensures the deployment is destroyed. The script
+should exit silently with code 0 if a deployment is successfully destroyed, and print any
+errors and information otherwise. The `destroy.sh` should also accept an optional team parameter, which can be
+used to destroy a specific instance.
 
 **Things to keep in mind when creating challenge deployments:**
 - Use Docker for challenge deployment, under no circumstances should challenge code be run in the same user space as the 
@@ -115,22 +117,23 @@ the script should just exit with status code `0`.
 #### Tests
 This folder contains at least one file called `main.py`, which is based on the following template
 ```python
-import argparse
-import json
-
-def run_test(flag, connection_string=None, handout_path=None, deployment_path=None):
-    # Implement your test here
-    pass
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run the test with specified arguments.")
 
     parser.add_argument("--flag", type=str, required=True, help="The flag to run the test.")
-    parser.add_argument("--connection-string", type=str, required=True, action='append', 
-                        help="The connection string.")
-    parser.add_argument("--handout-path", type=str, required=True, help="The handout path.")
-    parser.add_argument("--deployment-path", type=str, required=True, help="The deployment path.")
+    parser.add_argument("--connection-string", type=str, required=True, action='append',
+                        help="The connection string in the form: \"<ip/hostname> <port>\"" +
+                        "an example includes: --connection-string \"localhost 1337\" or" +
+                        "--connection-string \"172.18.0.1 6564\"")
+    parser.add_argument("--handout-path", type=str, required=True, help="The path" +
+    " the /Handout dir of the challenge.")
+    parser.add_argument("--deployment-path", type=str, required=True, help="The " +
+    "path to the /Source directory of this challenge.")
 
+    parser.add_argument("--force-reusability", type=str, required=False, help="This " +
+    "flag is used when testing the challenge before it is given to the player."
+    "After test is run with this flag, no artifacts should be left around"
+    "that can affect the players experience")
     args = parser.parse_args()
 
     print(json.dumps(
@@ -147,6 +150,8 @@ if __name__ == '__main__':
 - connection_string: Connection information for a deployed instance, as specified in the challenge README.md
 - handout_path: path to a folder containing the handout
 - deployment_path: path to a folder/mount containing the files deployed
+- force-reusability: a flag that can be set to indicate the challenge will be handed directly to the player after 
+testing. This should mean that no unintended artifacts are left on the challenge.
 
 This function should then check
 1) If the challenge is in good working order (DEPLOYMENT_WORKING)
