@@ -7,4 +7,3 @@ services:
       - "${HOSTNAME}:${PORT}:1337"
     environment:
       - FLAG=${FLAG}
-    container_name: "buffer_overflow${PORT}"

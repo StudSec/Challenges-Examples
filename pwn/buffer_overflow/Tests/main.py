@@ -11,8 +11,8 @@ context.log_level = 'error'
 def run_test(flag, connection_string=None, handout_path=None, deployment_path=None, force_reusability=False):
     result = {}
     connection_string = connection_string[0] # We only have a single connection string
-    host = connection_string.split(" ")[0]
-    port = connection_string.split(" ")[1]
+    host = connection_string.split(" ")[1]
+    port = connection_string.split(" ")[2]
 
     # If the challenge is in good working order (DEPLOYMENT_WORKING)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

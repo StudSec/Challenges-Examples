@@ -1,31 +1,28 @@
 #!/bin/bash
-# Default values for optional parameters
-HOSTNAME="127.0.0.1"
-PORT=1337
-FLAG=""
+# Default values for optional parameter
+TEAM_UUID=""
 
 # Parse named arguments
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
-        --port)
-            PORT="$2"; shift 2;;
+        --team)
+            TEAM_UUID="$2"; shift 2;;
         --help)
-            echo "Usage: ./desroy.sh --port PORT"
-            echo "  --port       Port the service is exposed at (default: 1337)"
+            echo "Usage: ./desroy.sh --team TEAM_UUID"
+            echo "  --team       Unique identifier for per-team instance (optional)"
             exit 0;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: ./desroy.sh --port PORT"
+            echo "Usage: ./desroy.sh --team TEAM_UUID"
             exit 1;;
     esac
 done
 
-# Build and run the Docker container
-export HOSTNAME=$HOSTNAME
-export PORT=$PORT
-export FLAG=$FLAG
+if [ -n "$TEAM_UUID" ]; then
+  docker compose -p "buffer_overflow_$TEAM_UUID" down
+else
+  docker compose down
+fi
 
-docker kill buffer_overflow$PORT
-docker remove buffer_overflow$PORT
 # Exit with the status code of the previous command
 exit $?
