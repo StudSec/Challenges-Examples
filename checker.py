@@ -34,7 +34,7 @@ class Challenge:
         self.dynamic_flags = config.get("dynamic_flags", False)
         self.handouts = []
 
-        self.port = None
+        self.port = []
         if os.path.exists(self.path + "/Source/run.sh") or os.path.exists(self.path + "/Source/destroy.sh"):
             self.hosted = True
         else:
@@ -69,8 +69,8 @@ class Challenge:
         if self.port == 0:
             self.port = str(next(allocate_port))
         subprocess.run(['/bin/bash', self.path + "/Source/run.sh",
-                        "--hostname", HOSTNAME,
-                        "--port", self.port] +
+                        "--hostname", HOSTNAME] +
+                       sum([['--port', p] for p in self.port], []) +
                         sum([['--flag', z] for z in self.flag.keys()], []),
                        cwd=self.path + "/Source/",
                        stdout=sys.stdout,
@@ -86,7 +86,7 @@ class Challenge:
                         "--deployment-path", self.path + "/Source"
                         ] + [
             elem for item in self.url for elem in
-            ("--connection-string", item.replace('{{PORT}}', self.port).replace('{{IP}}', host))
+            ("--connection-string", item.replace('{{IP}}', host))
         ], capture_output=True, text=True, cwd=self.path + "/Tests")
         if result.stderr:
             print(colored(f"Error while running tests for {self.name}", "red"))
