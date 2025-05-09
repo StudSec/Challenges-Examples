@@ -8,8 +8,10 @@ import json
 import toml
 import sys
 import os
+import re
 
 HOSTNAME = "127.0.0.1"
+CHECK = False
 
 def allocate_port_generator():
     current = 4000
@@ -32,13 +34,13 @@ class Challenge:
         self.dynamic_flags = config.get("dynamic_flags", False)
         self.handouts = []
 
-        self.port = None
+        self.port = []
         if os.path.exists(self.path + "/Source/run.sh") or os.path.exists(self.path + "/Source/destroy.sh"):
             self.hosted = True
         else:
             self.hosted = False
 
-        if self.hosted and args.check:
+        if self.hosted and CHECK:
             if not os.path.exists(path + "/Source/destroy.sh"):
                 print(self.name, colored("destroy.sh not found", "red"))
             if not os.path.exists(path + "/Source/run.sh"):
@@ -49,10 +51,16 @@ class Challenge:
                 relative_path = os.path.relpath(str(os.path.join(dirpath, filename)), path + "/Handout")
                 self.handouts.append(relative_path)
 
-    def allocate_port(self):
-        if self.hosted:
-            self.port = str(next(allocate_port))
 
+    def allocate_port(self):
+        generator = allocate_port
+
+        def handle_port(match):
+            port = str(next(generator))
+            self.port.append(port)
+            return port
+
+        self.url = [re.sub(r"{{PORT}}", handle_port, url) for url in self.url]
 
     def run(self):
         if not self.hosted:
@@ -61,8 +69,8 @@ class Challenge:
         if self.port == 0:
             self.port = str(next(allocate_port))
         subprocess.run(['/bin/bash', self.path + "/Source/run.sh",
-                        "--hostname", HOSTNAME,
-                        "--port", self.port] +
+                        "--hostname", HOSTNAME] +
+                        sum([['--port', p] for p in self.port], []) +
                         sum([['--flag', z] for z in self.flag.keys()], []),
                        cwd=self.path + "/Source/",
                        stdout=sys.stdout,
@@ -78,7 +86,7 @@ class Challenge:
                         "--deployment-path", self.path + "/Source"
                         ] + [
             elem for item in self.url for elem in
-            ("--connection-string", item.replace('{{PORT}}', self.port).replace('{{IP}}', host))
+            ("--connection-string", item.replace('{{IP}}', host))
         ], capture_output=True, text=True, cwd=self.path + "/Tests")
         if result.stderr:
             print(colored(f"Error while running tests for {self.name}", "red"))
@@ -212,6 +220,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     HOSTNAME = args.host
+    if args.check:
+        CHECK = True
 
     challenges = {}
     categories = {}
@@ -224,7 +234,7 @@ if __name__ == "__main__":
                 uuids = toml.load(dirpath + "/challenge.toml").keys()
                 for uuid in uuids:
                     if uuid in challenges.keys() or uuid in categories.keys():
-                        if args.check:
+                        if CHECK:
                             print(colored(f"Duplicate uuid found: {uuid}", "red"))
                         continue
 
@@ -236,7 +246,7 @@ if __name__ == "__main__":
             if "category.toml" in filenames:
                 uuid = toml.load(dirpath + "/category.toml")["uuid"]
                 if uuid in list(challenges.keys()) or uuid in list(categories.keys()):
-                    if args.check:
+                    if CHECK:
                         print(colored(f"Duplicate uuid found: {uuid}", "red"))
                     continue
 
@@ -247,7 +257,7 @@ if __name__ == "__main__":
                     category_uuid = toml.load(dirpath + "/../category.toml")["uuid"]
                     categories[category_uuid].challenges.append(categories[uuid])
         except Exception as e:
-            if args.check:
+            if CHECK:
                 print(colored(f"Error with {dirpath}", "red"))
                 print(traceback.format_exc())
 
