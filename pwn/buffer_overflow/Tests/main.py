@@ -4,22 +4,30 @@ import filecmp
 import json
 import re
 import os
+import socket
 
 context.log_level = 'error'
 
-def run_test(flag, connection_string=None, handout_path=None, deployment_path=None):
+def run_test(flag, connection_string=None, handout_path=None, deployment_path=None, force_reusability=False):
     result = {}
     connection_string = connection_string[0] # We only have a single connection string
     host = connection_string.split(" ")[1]
     port = connection_string.split(" ")[2]
 
     # If the challenge is in good working order (DEPLOYMENT_WORKING)
-    p = remote(host, int(port))
-    if "Welcome to the CTF challenge!" in p.recvline().decode('ascii'):
-        result["DEPLOYMENT_WORKING"] = ""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    res = sock.connect_ex((host, int(port)))
+    
+    if (res == 0):
+        sock.close()
+        p = remote(host, int(port))
+        if "Welcome to the CTF challenge!" in p.recvline().decode('ascii'):
+            result["DEPLOYMENT_WORKING"] = ""
+        else:
+            result["DEPLOYMENT_WORKING"] = "Challenge banner missing"
+        p.close()    
     else:
-        result["DEPLOYMENT_WORKING"] = "Challenge banner missing"
-    p.close()
+        result["DEPLOYMENT_WORKING"] = "Connection failed"
 
     # If the deployed flag and the stored flag (pass as function parameter) match (FLAG_CORRECT)
     if result["DEPLOYMENT_WORKING"]:
@@ -80,10 +88,18 @@ if __name__ == '__main__':
 
     parser.add_argument("--flag", type=str, required=True, help="The flag to run the test.")
     parser.add_argument("--connection-string", type=str, required=True, action='append',
-                        help="The connection string.")
-    parser.add_argument("--handout-path", type=str, required=True, help="The handout path.")
-    parser.add_argument("--deployment-path", type=str, required=True, help="The deployment path.")
+                        help="The connection string in the form: \"<ip/hostname> <port>\"" +
+                        "an example includes: --connection-string \"localhost 1337\" or" +
+                        "--connection-string \"172.18.0.1 6564\"")
+    parser.add_argument("--handout-path", type=str, required=True, help="The path" +
+    " the /Handout dir of the challenge.")
+    parser.add_argument("--deployment-path", type=str, required=True, help="The " +
+    "path to the /Source directory of this challenge.")
 
+    parser.add_argument("--force-reusability", action="store_true", help="This " +
+    "flag is used when testing the challenge before it is given to the player."
+    "After test is run with this flag, no artifacts should be left around"
+    "that can affect the players experience")
     args = parser.parse_args()
 
     print(json.dumps(
@@ -92,5 +108,6 @@ if __name__ == '__main__':
             connection_string=args.connection_string,
             handout_path=args.handout_path,
             deployment_path=args.deployment_path,
+            force_reusability=args.force_reusability
         )
     ))
