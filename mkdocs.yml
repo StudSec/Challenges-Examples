@@ -1,0 +1,49 @@
+site_name: Challenges Examples
+site_description: Documentation for the challenge format used by StudSec
+site_url: https://studsec.github.io/Challenges-Examples
+site_author: StudSec
+repo_name: studsec/Challenges-Examples
+repo_url: https://github.com/studsec/Challenges-Examples
+edit_uri: edit/main/docs/
+copyright: Maintained by <a href="https://studsec.nl">StudSec</a>.
+
+nav:
+  - Home: index.md
+  - Challenge Format: challenge.md
+  - Repository Structure: repo.md
+  - checker.py: checker.md
+plugins:
+  - search
+
+theme:
+  name: material
+  feature:
+    tabs: true
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/{{cookiecutter.author_github_handle}}/{{cookiecutter.project_name}}
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
