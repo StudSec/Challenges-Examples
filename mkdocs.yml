@@ -40,7 +40,7 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/{{cookiecutter.author_github_handle}}/{{cookiecutter.project_name}}
+      link: https://github.com/studsec/Challenges-Examples
 
 markdown_extensions:
   - toc:
