@@ -63,9 +63,10 @@ difficulty = "medium"
 The description of the challenge, this is what will be displayed to the contestants on the CTF platform.
 
 ```toml
-description = '''
-Example description
-'''
+description = """Example description line1
+Example description line 2"""
+# or
+description = """Example description single line"""
 ```
 
 ##### URL
